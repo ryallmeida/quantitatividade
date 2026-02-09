@@ -1,28 +1,34 @@
 ---
-title: "Introdução à Regressão Linear"
+title: "Introdução à Análise de Regressão"
 subtitle: "Monitoria em Métodos Quantitativos II"
 author: "Ryan Almeida"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
     html_document:
-       highlight: textmate
+       highlight: tango
        includes:
-         in_header: "C:/Users/ryall/Desktop/R/r_p_saude/r_p_saude/modulos/img/header.html"
+         in_header: "C:/Users/ryall/Desktop/R/quantitatividade/quantitatividade/img/header.html"
        theme: sandstone
-       number_sections: yes
+       number_sections: no
        toc: yes
        toc_float:
          collapsed: yes
          smooth_scroll: no
+header-includes:
+  - \usepackage{tikz}
+  - \usetikzlibrary{arrows.meta, positioning}
 ---
 
 ```{r normas de uso}
 
-# Aviso: Essas notas de aula são exclusivas para uso como guia do curso, porém não substituem as referências e materiais de apoio. Quaisquer erros são de responsabilidade do autor. 
+# Aviso: Essas notas de aula são exclusivas para uso como guia do curso
+# porém não substituem as referências e materiais de apoio. 
+# Quaisquer erros são de responsabilidade do autor. 
 # Esse material é protegido por ser propriedade intelectual.
 # Logo, ao reproduzir, divulgar ou distribuir notifique a autoria.
 
-# Caso encontre erros, contate os autores imediatamente. Via e-mail ryallmeida@gmail.com
+# Caso encontre erros, contate os autores imediatamente. 
+# Via e-mail ryallmeida@gmail.com
 
 ```
 
@@ -38,9 +44,16 @@ output:
 
 Esta é uma Apostila dos códigos e suas respectivas notas utilizadas nas monitorias do curso de "Métodos Quantitativos II" ofertado pelo Departamento de Ciência Política da Universidade Federal de Pernambuco. Estas notas e considerações foram tecidas monitor [Ryan Almeida](https://github.com/ryallmeida) balisando seu horizonte de conhecimento em Estatística, Análise de Dados e Metódos Quantitativos em Ciência Política.
 
+Aqui começamos um pouco para além da base. Já vimos em outros cursos como se munir da estatística descritiva  para descrever o comportamento dos dados, como formular um problema investigativo, construir uma hipótese sólida, escolher variáveis relevantes ancorada em uma teoria consistente. Agora a proposta é mostrar, passo a passo, como estruturar o raciocínio científico interseccionando a Ciência Política com a estatistica inferencial.
+
+Aqui, a questão central é:  Como lidar com a incerteza? Como interpretar distribuições de probabilidade? Como aplicar intervalos de confiança e testes de hipótese para validar resultados? E se o objetivo for compreender relações entre variáveis, o curso oferece ferramentas fundamentais: desde medidas de associação e análise de variância (ANOVA) até os modelos de correlação e regressões.
+
+Em síntese, este curso articula duas dimensões inseparáveis: a tentativa de reflexão teórica da Ciência Política e o rigor metodológico da Estatística. A proposta é ajudar a formar politólogos com um olhar crítico, mas também técnico, capaz de transformar problemas políticos e adjacentes em pesquisas consistentes de análises sólidas e reprodutíveis.
+
+
 ## Sobre o autor
 
-[Ryan Almeida](http://lattes.cnpq.br/8240327313395015) é graduando em Ciência Política com ênfase em Relações Internacionais pela Universidade Federal de Pernambuco (CFCH/UFPE) e, dentro da sua formação, realiza atividade de extensão, pesquisa e intervenção no Laboratório de Estudos da Sexualidade Humana (LabEshu/Dept. de Psicologia). Além disso, demonstra interesse nas áreas de métodos em Ciência Política e políticas públicas. Em virtude de sua atuação social, recebeu o Selo UNICEF (2021-2024) como Mobilizador de Adolescentes e Jovens, em reconhecimento às atividades desenvolvidas junto ao Núcleo de Cidadania dos Adolescentes (NUCA/UNICEF) de Arcoverde/PE. 
+[Ryan Almeida](http://lattes.cnpq.br/8240327313395015) está graduando em Ciência Política com ênfase em Relações Internacionais pela Universidade Federal de Pernambuco (CFCH/UFPE) e, dentro da sua formação, realiza atividade de extensão, pesquisa e intervenção no Laboratório de Estudos da Sexualidade Humana (LabEshu/Dept. de Psicologia). Além disso, demonstra interesse nas áreas de métodos em Ciência Política e políticas públicas. Em virtude de sua atuação social, recebeu o Selo UNICEF (2021-2024) como Mobilizador de Adolescentes e Jovens, em reconhecimento às atividades desenvolvidas junto ao Núcleo de Cidadania dos Adolescentes (NUCA/UNICEF) de Arcoverde/PE. 
 
 # Notas sobre à Regressão Linear propriamente dita
 
@@ -75,13 +88,11 @@ Ao interpretar o resultado de uma regressão linear, o foco recai principalmente
 Além dos coeficientes individuais, a regressão deve ser interpretada de forma global, observando-se medidas de ajuste do modelo, como o $R^2$, que indica a proporção da variância de (Y) explicada pelo conjunto das variáveis independentes. Em conjunto, esses elementos permitem avaliar tanto a força explicativa do modelo quanto a plausibilidade substantiva das relações estimadas.
 
 
-Não esqueça: a violação dos pressupostos da regressão pode levar a estimativas enviesadas, erros-padrão incorretos, testes t e f inválidos, e conclusões estatísticas equivocadas.
+Não esqueça: a violação dos pressupostos da regressão pode levar a estimativas enviesadas, erros-padrão incorretos, testes t e f inválidos, e conclusões estatísticas equivocadas. Pra sintetizar, ao estabelecer esse modelo pressupoe-se que a relação entre $Y$ e $x$ é linear, que a média do erro é nula, que o $x$ varia, que para um dado valor de $x$, a variância do erro $\epsilon_i$ é sempre $\sigma^2$, os erros são independentes e os erros seguem distribuição normal.
 
 <br>
 
 ```{r, echo=FALSE}
-library(dplyr)
-library(knitr)
 
 tabela_pressupostos <- data.frame(
   Pressuposto = c(
@@ -130,6 +141,377 @@ knitr::kable(tabela_pressupostos, align = "l")
 
 <br>
 
+Ainda não entendeu? Então vamos lá. O conceito de regressão nasce lá com aquele autor que a gente vê no ensino médio chamado "Francis Galton (1822-1911) que era o primo de Charles Darwin e era altamente competente em medicina e matemática. Galton era fascinado pela biometria humana e herdabilidade dos caracteres humanos (aquela que bebe na genética), inventou a indentificação pela impressão digital, estudou dados de altura dos pais e filhos e funda a "Law Of Universal Regression", para fizer que a altura dos filhos regrediam para a média, com a ajuda de Karl Pearson, ajustou a reta. Entretanto, não excluiu o fato de ser altamente racista. 
+
+Ao construirmos um modelo de regressão, que nada mais é do que uma "ponte" matemática entre o que sabemos (os dados) e o que queremos prever. Essa construção começa com uma escolha fundamental: a distribuição. Como a natureza não é perfeita, os dados sempre apresentam variações; por isso, decidimos se eles se comportam como uma curva Normal, ou se seguem padrões de contagem, como a distribuição de Poisson. É aqui que definimos a "personalidade" do erro no nosso modelo.
+
+Uma vez escolhida a distribuição, precisamos decidir qual quantidade daquele fenômeno queremos prever. Geralmente, estamos interessados na média, mas modelos mais sofisticados podem focar em quantis ou na variância. É essa lógica que nos leva à equação central da imagem:
+
+$$
+Q   (Y|x) = \eta(x, \theta)
+$$
+Nesta expressão, o lado esquerdo, $Q(Y|x)$, representa exatamente essa quantidade que queremos descobrir (o "Y") dado que conhecemos certas condições (o "x"). Para chegar a esse valor, utilizamos uma função, representada pela letra grega eta ($\eta$). Essa função é o desenho da nossa ponte: ela pode ser uma linha reta simples (linear) ou uma curva complexa (não linear), dependendo da biologia do problema.Dentro dessa função, combinamos as preditoras, que são as informações que você tem em mãos (como a temperatura ou a umidade do campo), com os parâmetros ($\theta$). Pense nos parâmetros como os "ajustes finos" da nossa máquina: eles podem ser apenas números que fazem a conta fechar (empíricos) ou podem representar algo real, como a taxa máxima de infecção de um fungo. Assim, ao unir a forma da função com os dados e os ajustes corretos, o modelo consegue nos dizer, com base no que já aconteceu, o que provavelmente acontecerá no futuro.
+
+# Métodos dos Mínimos Quadrados Ordinários {.tabset .tabset-fade}
+
+O Método dos Mínimos Quadrados Ordinários (MQO) é o fundamento matemático e estatístico que permite transformar um conjunto de dados observados em um modelo linear estimado. A sua importância decorre do fato de que ele fornece um critério claro, operacional e teoricamente justificado para escolher os coeficientes $\beta_0, \beta_1, \ldots, \beta_k$ que melhor descrevem a relação entre as variáveis.
+
+A primeira expressão
+
+$$
+\min_{\beta_0, \beta_1, \dots, \beta_k}\sum_{i=1}^{n}\left( Y_i - \beta_0 - \sum_{j=1}^{k} \beta_j X_{ji} \right)^2
+$$
+
+define o **problema de otimização central do MQO**. O que se busca é encontrar os valores dos parâmetros que minimizam a soma dos quadrados dos resíduos. O termo entre parênteses representa a diferença entre o valor observado $Y_i$ e o valor ajustado pelo modelo linear. Ao elevar essa diferença ao quadrado, o método garante que erros positivos e negativos não se anulem e, ao mesmo tempo, penaliza erros grandes de forma mais severa do que erros pequenos. Assim, o MQO escolhe os coeficientes que produzem, no conjunto, o **melhor ajuste médio possível** aos dados.
+
+A importância dessa minimização está no fato de que ela fornece uma **regra objetiva** para estimar os parâmetros. Não se trata de um ajuste visual ou arbitrário, mas de uma solução única (sob condições padrão) derivada de um critério matemático explícito. Em termos geométricos, o MQO projeta o vetor de valores observados (Y) sobre o espaço gerado pelas variáveis explicativas, garantindo que os resíduos sejam ortogonais a esse espaço. Isso confere ao modelo uma propriedade central: não há informação linear adicional nas variáveis explicativas que possa reduzir ainda mais os erros.
+
+A segunda expressão
+
+$$
+\hat{\varepsilon}_i = Y_i - \hat{\beta}_0 - \sum_{j=1}^{k} \hat{\beta}_j X_{ji}
+$$
+
+define o resíduo estimado para cada observação. O resíduo mede exatamente aquilo que o modelo não consegue explicar. A importância desse termo é dupla. Primeiro, ele permite avaliar a qualidade do ajuste, pois resíduos pequenos indicam que o modelo descreve bem os dados, enquanto resíduos grandes sugerem omissões, má especificação ou alta variabilidade não explicada. Segundo, os resíduos são a base para toda a inferência estatística associada à regressão: testes de hipóteses, intervalos de confiança e diagnósticos do modelo dependem diretamente do seu comportamento.
+
+Do ponto de vista teórico, o MQO é especialmente importante porque, sob hipóteses relativamente fracas (linearidade, exogeneidade, variância constante e ausência de multicolinearidade perfeita), os estimadores obtidos possuem propriedades desejáveis. Eles são não viesados, consistentes e, pelo Teorema de Gauss–Markov, apresentam a menor variância possível entre todos os estimadores lineares não viesados. Isso significa que, dentro dessa classe, nenhum outro método produz estimativas mais precisas em média.
+
+```{r, echo=FALSE, message = FALSE, warning = FALSE}
+
+# Instale se não tiver: install.packages("plotly")
+pacman::p_load(plotly)
+
+```
+
+```{r, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+
+# 1. Gerando dados sintéticos (exemplo: y = beta0 + beta1*x + erro)
+set.seed(123)
+n <- 50
+x_data <- runif(n, 0, 10)
+y_data <- 2 + 3 * x_data + rnorm(n, sd = 2)
+
+# 2. Definindo a função SSE (Soma dos Quadrados dos Erros)
+# SSE(beta) = sum((yi - xi'beta)^2)
+calc_sse <- function(b0, b1) {
+  preditos <- b0 + b1 * x_data
+  sum((y_data - preditos)^2)
+}
+
+# 3. Criando a grade de valores para Beta0 e Beta1
+# Evitamos acentos nos nomes das variaveis para prevenir o erro de encoding
+b0_seq <- seq(-5, 10, length.out = 50)
+b1_seq <- seq(0, 6, length.out = 50)
+sse_matriz <- outer(b0_seq, b1_seq, Vectorize(calc_sse))
+
+# 4. Calculando o ponto de minimo real (Estimador de Minimos Quadrados)
+modelo_linear <- lm(y_data ~ x_data)
+b0_hat <- coef(modelo_linear)[1]
+b1_hat <- coef(modelo_linear)[2]
+sse_minimo <- calc_sse(b0_hat, b1_hat)
+
+# 5. Gerando o grafico interativo
+# Note que usamos nomes simples (sem acentos) nos titulos
+plot_ly(x = ~b1_seq, y = ~b0_seq, z = ~sse_matriz) %>%
+  add_surface(
+    colorscale = "Viridis",
+    opacity = 0.7,
+    contours = list(
+      z = list(show = TRUE, usecolormap = TRUE, project = list(z = TRUE))
+    )
+  ) %>%
+  add_markers(
+    x = b1_hat, y = b0_hat, z = sse_minimo,
+    marker = list(size = 5, color = "red"),
+    name = "Minimo SSE (Beta Chapeu)"
+  ) %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "Beta 1 (Inclinacao)"),
+      yaxis = list(title = "Beta 0 (Intercepto)"),
+      zaxis = list(title = "SSE")
+    )
+  )
+
+```
+
+Além disso, o MQO cria uma ponte direta entre álgebra, geometria e estatística aplicada. Ele pode ser interpretado como um problema de minimização, como uma projeção em espaços vetoriais ou como um procedimento inferencial probabilístico. 
+
+Em síntese, a importância dos Mínimos Quadrados Ordinários reside em três aspectos centrais: ele fornece um critério matemático rigoroso para estimar coeficientes, permite quantificar sistematicamente o erro por meio dos resíduos e garante propriedades estatísticas ótimas sob condições bem definidas. 
+
+Onde no que segue a reta é o compornente deterministico, e a distância entre a reta e a observação é o componente aleatório.  
+
+## Resíduos 3D
+
+```{r, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+
+# =====================================================
+# GRAFICO A — alinhado esteticamente ao Grafico B
+# =====================================================
+
+# -----------------------------
+# 1. Dados simulados (mais variação)
+# -----------------------------
+set.seed(123)
+
+n <- 300
+x <- seq(1, 100, length.out = n)
+y <- 2 + 0.8 * x + rnorm(n, mean = 0, sd = 6)
+
+# -----------------------------
+# 2. Modelo OLS
+# -----------------------------
+modelo <- lm(y ~ x)
+y_hat <- fitted(modelo)
+resid <- y - y_hat
+
+# -----------------------------
+# 3. Gráfico 3D
+# -----------------------------
+p <- plot_ly() %>%
+  
+  # Pontos (x, y, residuo)
+  add_markers(
+    x = ~x,
+    y = ~y,
+    z = ~resid,
+    name = "",
+    marker = list(
+      size = 4,
+      color = resid,
+      colorscale = "Viridis",
+      colorbar = list(title = "Residuo"),
+      opacity = 0.85
+    )
+  )
+
+
+# -----------------------------
+# 5. Plano OLS (resíduo = 0)
+# -----------------------------
+p <- p %>% add_surface(
+  x = ~matrix(rep(x, each = 2), nrow = 2),
+  y = ~matrix(rep(range(y), length(x)), nrow = 2),
+  z = ~matrix(0, nrow = 2, ncol = length(x)),
+  opacity = 0.35,
+  showscale = FALSE,
+  colorscale = "Viridis",
+  contours = list(
+    z = list(
+      show = TRUE,
+      usecolormap = TRUE,
+      project = list(z = TRUE)
+    )
+  ),
+  name = "Plano OLS (residuo = 0)"
+)
+
+# -----------------------------
+# 6. Layout (mesma estética do Grafico B)
+# -----------------------------
+p <- p %>% layout(
+  scene = list(
+    xaxis = list(
+      title = "Variavel independente (x)",
+      showgrid = TRUE,
+      showbackground = TRUE
+    ),
+    yaxis = list(
+      title = "Valor observado (y)",
+      showgrid = TRUE,
+      showbackground = TRUE
+    ),
+    zaxis = list(
+      title = "Residuo (y − ŷ)",
+      showgrid = TRUE,
+      showbackground = TRUE
+    )
+  )
+)
+
+
+p
+
+```
+
+
+## R-Squared Alto
+
+```{r, echo=FALSE, fig.align='center'}
+
+# =====================================================
+# Visualização OLS com resíduos (Plotly - 2D)
+# =====================================================
+
+# -----------------------------
+# 1. Gerando dados simulados
+# -----------------------------
+set.seed(123)
+
+x <- 1:100
+y <- 2 + 0.8 * x + rnorm(100, mean = 0, sd = 2)
+
+# -----------------------------
+# 2. Ajustando o modelo OLS
+# -----------------------------
+modelo <- lm(y ~ x)
+y_hat <- fitted(modelo)
+
+# -----------------------------
+# 3. Construindo o gráfico base
+# -----------------------------
+p <- plot_ly() %>%
+  
+  # Pontos observados
+  add_markers(
+    x = ~x,
+    y = ~y,
+    name = "Observações",
+    marker = list(color = "black")
+  ) %>%
+  
+  # Reta de regressão OLS
+  add_lines(
+    x = ~x,
+    y = ~y_hat,
+    name = "Reta de regressão (OLS)",
+    line = list(color = "red", width = 3)
+  )
+
+# -----------------------------
+# 4. Adicionando os resíduos
+# -----------------------------
+for (i in seq_along(x)) {
+  p <- p %>% add_segments(
+    x = x[i],  xend = x[i],
+    y = y[i],  yend = y_hat[i],
+    line = list(color = "gray", width = 1),
+    showlegend = FALSE,
+    hoverinfo = "none"
+  )
+}
+
+# -----------------------------
+# 5. Ajustes de layout
+# -----------------------------
+p <- p %>% layout(
+  title = "",
+  xaxis = list(title = "Variável independente (x)"),
+  yaxis = list(title = "Variável dependente (y)"),
+  legend = list(
+    orientation = "h",
+    x = 0,
+    y = 1.1
+  )
+)
+
+# -----------------------------
+# 6. Exibir gráfico
+# -----------------------------
+p
+
+
+```
+
+##  R-Squared Baixo
+
+```{r, echo=FALSE, fig.align='center'}
+library(plotly)
+
+# -----------------------------
+# 1. Gerando dados simulados (N=200)
+# -----------------------------
+set.seed(123)
+x_val <- runif(200, min = 0, max = 100)
+y_val <- 2 + 0.8 * x_val + rnorm(200, 0, 10)
+
+# -----------------------------
+# 2. Ajustando o modelo OLS
+# -----------------------------
+modelo_ajustado <- lm(y_val ~ x_val)
+y_preditos <- fitted(modelo_ajustado)
+
+# -----------------------------
+# 3. Construindo o gráfico com Plotly
+# -----------------------------
+p_interativo <- plot_ly() %>%
+  # Pontos: Observacoes
+  add_markers(x = ~x_val, y = ~y_val, 
+              name = "Observacoes",
+              marker = list(color = "black", size = 6, opacity = 0.7)) %>%
+  
+  # Reta: Regressao (OLS)
+  add_lines(x = ~x_val, y = ~y_preditos, 
+            name = "Reta de regressao (OLS)",
+            line = list(color = "red", width = 3))
+
+# 4. Adicionando os Residuos (Linhas cinzas)
+# Usando add_segments de forma vetorizada para melhor performance com 200 pontos
+p_interativo <- p_interativo %>% add_segments(
+  x = x_val, xend = x_val,
+  y = y_val, yend = y_preditos,
+  line = list(color = "gray", width = 0.5),
+  showlegend = TRUE,
+  name = "Residuos (erros)",
+  hoverinfo = "none"
+)
+
+# 5. Ajustes de Layout
+p_interativo <- p_interativo %>% layout(
+  xaxis = list(title = "Variavel independente (x)"),
+  yaxis = list(title = "Variavel dependente (y)"),
+  legend = list(orientation = "h", x = 0, y = 1.1),
+  margin = list(l = 50, r = 50, b = 50, t = 80)
+)
+
+p_interativo
+
+
+```
+
+## R2 ~ 0 
+
+```{r, echo=FALSE, fig.align='center'}
+
+library(plotly)
+
+# -----------------------------
+# 1. Gerando dados com baixissima correlacao (R2 baixo)
+# -----------------------------
+set.seed(456)
+n_pontos <- 200
+x_ruido <- runif(n_pontos, min = 0, max = 100)
+
+# Geramos Y com uma inclinacao minima e um erro (sd) gigantesco
+# Isso garante que a reta nao consiga explicar os dados
+y_ruido <- 50 + 0.05 * x_ruido + rnorm(n_pontos, mean = 0, sd = 40)
+
+# -----------------------------
+# 2. Ajustando o modelo e calculando R2
+# -----------------------------
+modelo_ruim <- lm(y_ruido ~ x_ruido)
+r2_valor <- summary(modelo_ruim)$r.squared
+y_chapeu <- fitted(modelo_ruim)
+
+# -----------------------------
+# 3. Construindo o grafico interativo
+# -----------------------------
+plot_ly() %>%
+  add_markers(x = ~x_ruido, y = ~y_ruido, 
+              name = "Dados Dispersos",
+              marker = list(color = "black", opacity = 0.5)) %>%
+  add_lines(x = ~x_ruido, y = ~y_chapeu, 
+            name = paste("Reta OLS (R2 =", round(r2_valor * 100, 2), "%)"),
+            line = list(color = "red", width = 3)) %>%
+  layout(
+    xaxis = list(title = "Variavel Independente"),
+    yaxis = list(title = "Variavel Dependente"),
+    legend = list(orientation = "h", x = 0, y = 1.1)
+  )
+
+```
+
+# Estatísticas descritivas 
 
 Instale o pacote que segue
 
@@ -140,6 +522,7 @@ if(!require("pacman")) {
 }
 
 pacman::p_load(tidyverse,
+               lubridate,
                WDI)
 
 ```
@@ -160,9 +543,20 @@ dados <- WDI(
   end = 2020
 )
 
+# CORREÇÃO DE LEITURA DOS DADOS
+dados$country <- as.factor(dados$country)
+dados$iso2c <- as.factor(dados$iso2c)
+dados$iso3c <- as.factor(dados$iso3c)
+
+dados$year <- lubridate::ymd(paste0(dados$year, "-01-01"))
+
+# CONFERINDO ...
 dplyr::glimpse(dados)
 
 ```
+
+
+
 ```{r}
 
 # TESTANDO A PRESENÇA DE NAs
@@ -174,7 +568,7 @@ summary(dados$desemprego)
 # NOTE A PRESENÇA DE NAS NO OUTPUT QUE SEGUE
 
 ```
-Uma possibilidade de tratamento pode-se ser via do critério do intervalo interquartil (IQR), considerando como observações extremas os valores situados abaixo de Q1 − 1,5×IQR ou acima de Q3 + 1,5×IQR. O método do IQR é robusto a distribuições não normais e reduz a influência desproporcional de valores extremos sobre medidas de associação, como coeficientes de correlação, contribuindo para maior estabilidade estatística dos resultados.
+Uma possibilidade de tratamento pode-se ser via do critério do intervalo interquartil (IQR), considerando como observações extremas os valores situados abaixo de Q1 − 1,5 * IQR ou acima de Q3 + 1,5 * IQR. O método do IQR é robusto a distribuições não normais e reduz a influência desproporcional de valores extremos sobre medidas de associação, como coeficientes de correlação, contribuindo para maior estabilidade estatística dos resultados.
 
 
 ```{r}
@@ -200,7 +594,7 @@ dados_sem_outliers <- dados %>%
 
 ```{r}
 
-# TESTANDO A PRESENÇA DE NAs
+# OBSERVANDO A PRESENÇA DE NAs
 
 summary(dados_sem_outliers$pib)
 sd(dados_sem_outliers$pib)
@@ -215,11 +609,12 @@ sd(dados_sem_outliers$desemprego)
 ```
 
 ```{r}
-# OUTRA POSSIBILIDADE É IMPUTAÇÃO DOS DADOS VIA COMPORTAMENTO DE ESTATÍSTICAS DESCRITIVAS
+# OUTRA POSSIBILIDADE É IMPUTAÇÃO DOS DADOS 
+# VIA COMPORTAMENTO DE ESTATÍSTICAS DESCRITIVAS
 
 dados_imputados <- dados %>%
   mutate(
-    bienio = year - (year %% 2)
+    bienio = year(year) - (year(year) %% 2)
   ) %>%
   group_by(bienio) %>%
   mutate(
@@ -264,15 +659,72 @@ sd(dados_imputados$desemprego)
 
 # Correlação
 
+Na inferência estatística é útil idenficiar se existe relação entre duas ou mais variáveis. Assim, em muitos problemas existem duas ou mais variáveis (de natureza quantitativa) que são relacionadas, e tem-se o interesse em estudar e explorar essa relação. 
+
+```{r, echo = FALSE, fig.align="center", warning = FALSE, message = FALSE}
+
+# Define o layout para 1 linha e 3 colunas
+par(mfrow = c(1, 3))
+
+# 1. Correlação Positiva
+x_pos <- 1:50
+y_pos <- x_pos + rnorm(50, sd = 5)
+plot(x_pos, y_pos, main = "Positive correlation", 
+     xlab = "X", ylab = "Y", col = "black", pch = 1)
+
+# 2. Ausência de Correlação
+x_null <- runif(50, 1, 50)
+y_null <- runif(50, 1, 50)
+plot(x_null, y_null, main = "No correlation", 
+     xlab = "X", ylab = "Y", col = "black", pch = 1)
+
+# 3. Correlação Negativa
+x_neg <- 1:50
+y_neg <- -x_neg + rnorm(50, sd = 5)
+plot(x_neg, y_neg, main = "Negative correlation", 
+     xlab = "X", ylab = "Y", col = "black", pch = 1)
+
+# Resetar os parâmetros gráficos para o padrão (1x1)
+par(mfrow = c(1, 1))
+```
+
+Então, quando se quer verificar se há relação entre duas variáveis, pede-se um diagrama de dispersão. Onde mantém-se o esquema previamente já falado: $Y$ é a variável dependente e $X_i$ é a variável independente ou também chamada de covariável. Assim, o padrão determinado pelos pontos no diagrama sugere se existe ou não relação entre variáveis. Para tanto, o coeficiente de correlação linear de Pearson é uma ferramenta estatística que serve para medir o quanto duas variáveis "caminham juntas" e qual a força dessa união, variando sempre entre os valores -1 e 1. Na prática, o cálculo compara a variação conjunta das duas variáveis (a covariância) com a variação individual de cada uma (os desvios), funcionando como um termômetro que indica se existe um padrão de linha reta na relação entre esses dados, permitindo entender de forma simples e direta se dois fenômenos estão conectados matematicamente. As equações abaixo demonstram algebricamente o Coeficiente de Correlação de Pearson. 
+
+$$r = \frac{Cov(X, Y)}{\sqrt{S^2_x S^2_y}}$$
+
+em que
+
+$$S^2_x = \frac{1}{n-1} \sum_{i=1}^{n} (X_i - \bar{X})^2$$
+
+$$S^2_y = \frac{1}{n-1} \sum_{i=1}^{n} (Y_i - \bar{Y})^2$$
+
+$$Cov(X, Y) = \frac{1}{n-1} \left[ \sum_{i=1}^{n} X_i Y_i - n \bar{X} \bar{Y} \right]$$
+
+Assim, esse coeficiente de correlação denotado por $r$, deve-se assumir somente um valor entre -1 e +1. O que em se $r$ = +1 existe correlação perfeita e positiva entre as variáveis, se $r$ = -1 existe correlação perfeita e negativa entre as variáveis e se $r$ = 0 não existe correlação entre as variáveis. 
+
 ```{r}
 
 # PACOTE PARA ANÁLISE DE CORRELAÇÃO
 pacman::p_load(corrplot)
 
 
+
+
 ```
 
 ## Correlação de Pearson
+
+```{r, eval=FALSE}
+
+# PARA EXERCUTAR NO R A CORRELAÇÃO DE PEARSON. USA-SE:
+cov(x, y)
+cor(x, y)
+
+
+# QUANDO APROXIMA-SE DE ZERO, RECOMENDA-SE O USO DE UM TESTE DE HIPOTESES
+cor.test(x, y)
+
+```
 
 Quais são os pressupostos da Correlação de Pearson? Normalidade via Teste Shapiro-Wilk, presença de Outliers e relação linear entre as variáveis
 
@@ -280,7 +732,10 @@ Quais são os pressupostos da Correlação de Pearson? Normalidade via Teste Sha
 # TESTE DE NORMALIDADE
 # TESTE DE HIPÓTESES
 
-# ONDE A HIPOTESE NULA (H0) É QUE OS DADOS SEGUEM A DISTRIBUIÇÃO NORMAL (PARA VALORES MAIORES QUE 5% NO P-VALUE), E A HIPOTESE ALTERNATIVA (H1) É QUE A DISTRIBUIÇÃO É DIFERENTE DA NORMAL (PARA VALORES MENORES QUE 5% NO P-VALUE)
+# ONDE A HIPOTESE NULA (H0) É QUE OS DADOS SEGUEM A DISTRIBUIÇÃO NORMAL 
+# (PARA VALORES MAIORES QUE 5% NO P-VALUE)
+# E A HIPOTESE ALTERNATIVA (H1) É QUE A DISTRIBUIÇÃO É DIFERENTE DA NORMAL 
+# (PARA VALORES MENORES QUE 5% NO P-VALUE)
 
 shapiro.test(dados_sem_outliers$pib)
 shapiro.test(dados_sem_outliers$vida)
@@ -289,11 +744,11 @@ shapiro.test(dados_sem_outliers$desemprego)
 # NENHUMA DAS ALTERNATIVAS ACIMA TÊM DISTRIBUIÇÃO NORMAL
 
 ```
-### Presença de outliers {.tabset .tabset-fade}
+### Presuposto: Ausência de outliers {.tabset .tabset-fade}
 
 #### PIB
 
-```{r}
+```{r, fig.align="center"}
 
 boxplot(dados_sem_outliers$pib)
 
@@ -301,7 +756,7 @@ boxplot(dados_sem_outliers$pib)
 
 #### Expectativa de vida
 
-```{r}
+```{r, fig.align="center"}
 
 boxplot(dados_sem_outliers$vida)
 
@@ -309,25 +764,26 @@ boxplot(dados_sem_outliers$vida)
 
 #### Desemprego
 
-```{r}
+```{r, fig.align="center"}
 
 boxplot(dados_sem_outliers$desemprego)
 
 ```
 
-### Relação linear entre variáveis {.tabset .tabset-fade}
+### Pressuposto: Relação linear entre variáveis {.tabset .tabset-fade}
 
 #### Arranjo 1
 
-```{r}
+```{r, fig.align="center"}
 
 plot(dados_sem_outliers$vida, dados_sem_outliers$pib)
 
 
 ```
+
 #### Arranjo 2
 
-```{r}
+```{r, fig.align="center"}
 
 plot(dados_sem_outliers$vida, dados_sem_outliers$desemprego)
 
@@ -336,7 +792,7 @@ plot(dados_sem_outliers$vida, dados_sem_outliers$desemprego)
 
 #### Arranjo 3
 
-```{r}
+```{r, fig.align="center"}
 
 plot(dados_sem_outliers$desemprego, dados_sem_outliers$pib)
 
@@ -348,152 +804,11 @@ plot(dados_sem_outliers$desemprego, dados_sem_outliers$pib)
 
 ## Correlação de Kendall
 
-# Métodos dos Mínimos Quadrados Ordinários {.tabset .tabset-fade}
+# Presuposto de multicolinearidade: notas sobre alta dimensionalidade e teste de VIF 
 
-O Método dos Mínimos Quadrados Ordinários (MQO) é o fundamento matemático e estatístico que permite transformar um conjunto de dados observados em um modelo linear estimado. A sua importância decorre do fato de que ele fornece um critério claro, operacional e teoricamente justificado para escolher os coeficientes $\beta_0, \beta_1, \ldots, \beta_k$ que melhor descrevem a relação entre as variáveis.
+# Redução de dimensionalidade: Análise de Componentes Principais
 
-A primeira expressão
-
-$$
-\min_{\beta_0, \beta_1, \dots, \beta_k}\sum_{i=1}^{n}\left( Y_i - \beta_0 - \sum_{j=1}^{k} \beta_j X_{ji} \right)^2
-$$
-
-define o **problema de otimização central do MQO**. O que se busca é encontrar os valores dos parâmetros que minimizam a soma dos quadrados dos resíduos. O termo entre parênteses representa a diferença entre o valor observado (Y_i) e o valor ajustado pelo modelo linear. Ao elevar essa diferença ao quadrado, o método garante que erros positivos e negativos não se anulem e, ao mesmo tempo, penaliza erros grandes de forma mais severa do que erros pequenos. Assim, o MQO escolhe os coeficientes que produzem, no conjunto, o **melhor ajuste médio possível** aos dados.
-
-A importância dessa minimização está no fato de que ela fornece uma **regra objetiva** para estimar os parâmetros. Não se trata de um ajuste visual ou arbitrário, mas de uma solução única (sob condições padrão) derivada de um critério matemático explícito. Em termos geométricos, o MQO projeta o vetor de valores observados (Y) sobre o espaço gerado pelas variáveis explicativas, garantindo que os resíduos sejam ortogonais a esse espaço. Isso confere ao modelo uma propriedade central: não há informação linear adicional nas variáveis explicativas que possa reduzir ainda mais os erros.
-
-A segunda expressão
-
-$$
-\hat{\varepsilon}_i = Y_i - \hat{\beta}_0 - \sum_{j=1}^{k} \hat{\beta}_j X_{ji}
-$$
-
-define o resíduo estimado para cada observação. O resíduo mede exatamente aquilo que o modelo não consegue explicar. A importância desse termo é dupla. Primeiro, ele permite avaliar a qualidade do ajuste, pois resíduos pequenos indicam que o modelo descreve bem os dados, enquanto resíduos grandes sugerem omissões, má especificação ou alta variabilidade não explicada. Segundo, os resíduos são a base para toda a inferência estatística associada à regressão: testes de hipóteses, intervalos de confiança e diagnósticos do modelo dependem diretamente do seu comportamento.
-
-Do ponto de vista teórico, o MQO é especialmente importante porque, sob hipóteses relativamente fracas (linearidade, exogeneidade, variância constante e ausência de multicolinearidade perfeita), os estimadores obtidos possuem propriedades desejáveis. Eles são não viesados, consistentes e, pelo Teorema de Gauss–Markov, apresentam a menor variância possível entre todos os estimadores lineares não viesados. Isso significa que, dentro dessa classe, nenhum outro método produz estimativas mais precisas em média.
-
-Além disso, o MQO cria uma ponte direta entre álgebra, geometria e estatística aplicada. Ele pode ser interpretado como um problema de minimização, como uma projeção em espaços vetoriais ou como um procedimento inferencial probabilístico. 
-
-Em síntese, a importância dos Mínimos Quadrados Ordinários reside em três aspectos centrais: ele fornece um critério matemático rigoroso para estimar coeficientes, permite quantificar sistematicamente o erro por meio dos resíduos e garante propriedades estatísticas ótimas sob condições bem definidas. 
-
-
-### Modelo com R2 alto
-
-```{r, echo=FALSE, fig.align='center'}
-
-# -----------------------------
-# 1. Gerando dados simulados
-# -----------------------------
-set.seed(123)
-
-x <- 1:100
-y <- 2 + 0.8 * x + rnorm(100, mean = 0, sd = 2)
-
-# -----------------------------
-# 2. Ajustando o modelo OLS
-# -----------------------------
-modelo <- lm(y ~ x)
-
-# -----------------------------
-# 3. Plot dos dados
-# -----------------------------
-plot(x, y,
-     pch = 16,
-     col = "black",
-     xlab = "Variavel independente (x)",
-     ylab = "Variavel dependente (y)",
-     main = "")
-
-# -----------------------------
-# 4. Reta de regressão
-# -----------------------------
-abline(modelo, col = "red", lwd = 3)
-
-# -----------------------------
-# 5. Desenhando os resíduos
-# -----------------------------
-y_hat <- fitted(modelo)
-
-segments(x0 = x, y0 = y,
-         x1 = x, y1 = y_hat,
-         col = "gray")
-
-# -----------------------------
-# 6. Legenda explicativa
-# -----------------------------
-legend("topleft",
-       legend = c(
-         "Observacoes",
-         "Reta de regressao (OLS)",
-         "Residuos (erros)"
-       ),
-       col = c("black", "red", "gray"),
-       pch = c(16, NA, NA),
-       lwd = c(NA, 3, 1),
-       lty = c(NA, 1, 1),
-       bty = "n")
-
-
-```
-
-### Modelo de R2 mais baixo
-
-```{r, echo=FALSE, fig.align='center'}
-
-# -----------------------------
-# 1. Gerando dados simulados
-# -----------------------------
-set.seed(123)
-
-x <- runif(200, min = 0, max = 100)
-y <- 2 + 0.8 * x + rnorm(200, 0, 10)
-
-# -----------------------------
-# 2. Ajustando o modelo OLS
-# -----------------------------
-modelo <- lm(y ~ x)
-
-# -----------------------------
-# 3. Plot dos dados
-# -----------------------------
-plot(x, y,
-     pch = 16,
-     col = "black",
-     xlab = "Variavel independente (x)",
-     ylab = "Variavel dependente (y)",
-     main = "")
-
-# -----------------------------
-# 4. Reta de regressão
-# -----------------------------
-abline(modelo, col = "red", lwd = 3)
-
-# -----------------------------
-# 5. Desenhando os resíduos
-# -----------------------------
-y_hat <- fitted(modelo)
-
-segments(x0 = x, y0 = y,
-         x1 = x, y1 = y_hat,
-         col = "gray")
-
-# -----------------------------
-# 6. Legenda explicativa
-# -----------------------------
-legend("topleft",
-       legend = c(
-         "Observacoes",
-         "Reta de regressao (OLS)",
-         "Residuos (erros)"
-       ),
-       col = c("black", "red", "gray"),
-       pch = c(16, NA, NA),
-       lwd = c(NA, 3, 1),
-       lty = c(NA, 1, 1),
-       bty = "n")
-
-
-```
+# Redução de dimensionalidade: Análise Fatorial
 
 # Análise dos resíduos: a diagnose do modelo
 
@@ -506,8 +821,6 @@ teste de shapiro
 ## Outliers, pontos de alavancagem e distância de Cook
 
 # Generalized Linear Models (GLMs)
-
-# Modelos Não-lineares
 
 # Referências
 
@@ -522,5 +835,7 @@ teste de shapiro
   />
 </a>
 <br>
+
+![](https://raw.githubusercontent.com/ryallmeida/quantitatividade/main/img/APOIADO.png){width=403px, .center}
 
 
