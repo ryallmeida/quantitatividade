@@ -1,0 +1,526 @@
+---
+title: "Introdução à Regressão Linear"
+subtitle: "Monitoria em Métodos Quantitativos II"
+author: "Ryan Almeida"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+    html_document:
+       highlight: textmate
+       includes:
+         in_header: "C:/Users/ryall/Desktop/R/r_p_saude/r_p_saude/modulos/img/header.html"
+       theme: sandstone
+       number_sections: yes
+       toc: yes
+       toc_float:
+         collapsed: yes
+         smooth_scroll: no
+---
+
+```{r normas de uso}
+
+# Aviso: Essas notas de aula são exclusivas para uso como guia do curso, porém não substituem as referências e materiais de apoio. Quaisquer erros são de responsabilidade do autor. 
+# Esse material é protegido por ser propriedade intelectual.
+# Logo, ao reproduzir, divulgar ou distribuir notifique a autoria.
+
+# Caso encontre erros, contate os autores imediatamente. Via e-mail ryallmeida@gmail.com
+
+```
+
+```{r}
+
+# CODADO ORIGINALMENTE EM R, V. 4.5.2
+
+```
+
+# Prefácio {.tabset .tabset-fade}
+
+## Sobre a apostila
+
+Esta é uma Apostila dos códigos e suas respectivas notas utilizadas nas monitorias do curso de "Métodos Quantitativos II" ofertado pelo Departamento de Ciência Política da Universidade Federal de Pernambuco. Estas notas e considerações foram tecidas monitor [Ryan Almeida](https://github.com/ryallmeida) balisando seu horizonte de conhecimento em Estatística, Análise de Dados e Metódos Quantitativos em Ciência Política.
+
+## Sobre o autor
+
+[Ryan Almeida](http://lattes.cnpq.br/8240327313395015) é graduando em Ciência Política com ênfase em Relações Internacionais pela Universidade Federal de Pernambuco (CFCH/UFPE) e, dentro da sua formação, realiza atividade de extensão, pesquisa e intervenção no Laboratório de Estudos da Sexualidade Humana (LabEshu/Dept. de Psicologia). Além disso, demonstra interesse nas áreas de métodos em Ciência Política e políticas públicas. Em virtude de sua atuação social, recebeu o Selo UNICEF (2021-2024) como Mobilizador de Adolescentes e Jovens, em reconhecimento às atividades desenvolvidas junto ao Núcleo de Cidadania dos Adolescentes (NUCA/UNICEF) de Arcoverde/PE. 
+
+# Notas sobre à Regressão Linear propriamente dita
+
+
+Este é um método para modelar o relacionamento entre duas ou mais variáveis e serve para prever a variável resposta (y) com base nos valores das variáveis preditoras (x), a fim de quantificar a força dessa relação.
+
+
+A equação
+
+$$
+\hat{Y}_i = \hat{\beta}_0 + \sum_{j=1}^{k} \hat{\beta}_j X_{ji} + \varepsilon_i
+$$
+
+representa um **modelo de regressão linear múltipla** e descreve como o valor estimado de uma variável dependente é explicado por um conjunto de variáveis independentes.
+
+Em primeiro lugar, $\hat{Y}_i$ indica o valor estimado da variável resposta para o indivíduo (ou observação) $i$. Trata-se do resultado que o modelo prevê com base nas informações disponíveis, e não do valor observado diretamente nos dados. O uso do “chapéu” (^) sinaliza que se trata de uma estimativa produzida pelo modelo estatístico.
+
+O termo $\hat{\beta}_0$ é o intercepto da regressão. Ele representa o valor esperado de $Y$ quando todas as variáveis explicativas $X_{ji}$ assumem valor zero. Em termos substantivos, o intercepto pode ser interpretado como um ponto de referência ou condição basal, ainda que, em muitos contextos empíricos, essa situação (todas as variáveis iguais a zero) não seja realista. Mesmo assim, o intercepto é fundamental para posicionar corretamente a reta (ou hiperplano) de regressão.
+
+O somatório
+
+$$
+\sum_{j=1}^{k} \hat{\beta}_j X_{ji}
+$$
+
+expressa a contribuição conjunta das $k$ variáveis independentes para explicar Y. Cada coeficiente $\hat{\beta}_j$ indica o efeito médio associado à variável $X_j$, mantendo todas as demais constantes. Em termos interpretativos, $\hat{\beta}_j$ informa quanto se espera que $\hat{Y}_i$ varie quando $X_{ji}$ aumenta uma unidade, assumindo que as outras variáveis do modelo não se alterem. Assim, os coeficientes capturam relações parciais, e não efeitos brutos ou isolados.
+
+O termo $\varepsilon_i$ representa o erro aleatório ou resíduo associado à observação i. Ele corresponde à parcela de $Y_i$ que não é explicada pelas variáveis incluídas no modelo. Em termos substantivos, o erro agrega fatores não observados, imprecisões de medida e variações aleatórias inevitáveis nos fenômenos sociais e empíricos.
+
+Ao interpretar o resultado de uma regressão linear, o foco recai principalmente sobre os coeficientes $\hat{\beta}_j$, seus sinais (positivos ou negativos), suas magnitudes e sua significância estatística. Um coeficiente positivo indica uma associação direta entre a variável explicativa e a variável dependente; um coeficiente negativo indica uma associação inversa. A significância estatística, por sua vez, informa se o efeito estimado é suficientemente distinto de zero para que não seja atribuído apenas ao acaso, dado um nível de confiança pré-estabelecido.
+
+Além dos coeficientes individuais, a regressão deve ser interpretada de forma global, observando-se medidas de ajuste do modelo, como o $R^2$, que indica a proporção da variância de (Y) explicada pelo conjunto das variáveis independentes. Em conjunto, esses elementos permitem avaliar tanto a força explicativa do modelo quanto a plausibilidade substantiva das relações estimadas.
+
+
+Não esqueça: a violação dos pressupostos da regressão pode levar a estimativas enviesadas, erros-padrão incorretos, testes t e f inválidos, e conclusões estatísticas equivocadas.
+
+<br>
+
+```{r, echo=FALSE}
+library(dplyr)
+library(knitr)
+
+tabela_pressupostos <- data.frame(
+  Pressuposto = c(
+    "Linearidade",
+    "Ausência de erro de mensuração",
+    "A expectativa da média do termo de erro é igual a zero",
+    "Homocedasticidade",
+    "Ausência de autocorrelação",
+    "A variável independente não deve ser correlacionada com o termo de erro",
+    "Nenhuma variável teoricamente relevante para explicar Y foi deixada de fora do modelo e nenhuma variável irrelevante para explicar Y foi incluída no modelo (Correta Especificação)",
+    "Ausência de multicolinearidade",
+    "Distribuição normal do termo de erro",
+    "Proporção adequada entre casos e variáveis"
+  ),
+  `O que acontece se ele for violado?` = c(
+    "Erro de especificação do modelo (forma funcional equivocada). Os coeficientes serão inconsistentes (enviesados e ineficientes).",
+    "Diversos problemas podem surgir, desde ineficiência até viés, a depender do tipo de erro (aleatório ou sistemático) e do local do erro (variável dependente e/ou independente).",
+    "O intercepto do modelo será afetado.",
+    "Estimativas inconsistentes (ineficiência). Não poderemos confiar nos testes de significância.",
+    "Inconsistência dos testes de significância (intervalos de confiança e p-valor serão prejudicados).",
+    "Estimativas inconsistentes (viés).",
+    "Estimativas inconsistentes. Viés e ineficiência. Pior cenário do mundo.",
+    "Inconsistência dos testes de significância (intervalos de confiança e p-valor serão prejudicados).",
+    "Estimativas inconsistentes. Depende da natureza do problema. Poderão ocorrer viés e/ou ineficiência.",
+    "Ineficiência. Testes de significância serão muito instáveis. Quanto menor a amostra, pior."
+  ),
+  `O que pode ser feito?` = c(
+    "Adotar outra forma funcional. Transformar as variáveis.",
+    "Usar modelos de equações estruturais. Estimar indicadores compostos (análise fatorial). Utilizar outras variáveis com maior nível de validade e confiabilidade.",
+    "Procurar ajuda na literatura sobre o tema em questão com o objetivo de garantir que todas as variáveis teoricamente relevantes foram incluídas no modelo e que nenhuma variável irrelevante foi considerada.",
+    "Utilizar correções estatísticas para melhorar a qualidade das estimativas.",
+    "Diferentes modalidades de autocorrelação exigem tratamentos distintos. No caso da autocorrelação serial, o mais adequado é utilizar modelos de séries temporais.",
+    "Garantir correta especificação do modelo. Utilizar variáveis instrumentais.",
+    "Garantir correta especificação do modelo.",
+    "Verificar a codificação e a transformação das variáveis. Aumentar o tamanho da amostra. Utilizar alguma técnica de redução de dados. Melhorar especificação do modelo.",
+    "Aumentar o tamanho da amostra.",
+    "Aumentar a quantidade de observações. Melhorar a especificação do modelo. Reduzir a quantidade de variáveis independentes."
+  ),
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
+
+knitr::kable(tabela_pressupostos, align = "l")
+
+```
+
+<br>
+
+
+Instale o pacote que segue
+
+```{r Carregamento dos Pacotes, echo=FALSE, message=FALSE, warning=FALSE}
+
+if(!require("pacman")) {
+  install.packages("pacman")
+}
+
+pacman::p_load(tidyverse,
+               WDI)
+
+```
+
+
+```{r}
+
+# CARREGANDO DADOS
+
+dados <- WDI(
+  country = "all",
+  indicator = c(
+    pib = "NY.GDP.PCAP.KD",
+    vida = "SP.DYN.LE00.IN",
+    desemprego = "SL.UEM.TOTL.ZS"
+  ),
+  start = 2000,
+  end = 2020
+)
+
+dplyr::glimpse(dados)
+
+```
+```{r}
+
+# TESTANDO A PRESENÇA DE NAs
+
+summary(dados$pib)
+summary(dados$vida)
+summary(dados$desemprego)
+
+# NOTE A PRESENÇA DE NAS NO OUTPUT QUE SEGUE
+
+```
+Uma possibilidade de tratamento pode-se ser via do critério do intervalo interquartil (IQR), considerando como observações extremas os valores situados abaixo de Q1 − 1,5×IQR ou acima de Q3 + 1,5×IQR. O método do IQR é robusto a distribuições não normais e reduz a influência desproporcional de valores extremos sobre medidas de associação, como coeficientes de correlação, contribuindo para maior estabilidade estatística dos resultados.
+
+
+```{r}
+
+# VAMOS IGNORAR OS VALORES AUSENTES, TRATAMENTO VIA LIMPEZA POR IQR
+
+remove_outliers_iqr <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm = TRUE)
+  q3 <- quantile(x, 0.75, na.rm = TRUE)
+  iqr <- q3 - q1
+  
+  x >= (q1 - 1.5 * iqr) & x <= (q3 + 1.5 * iqr)
+}
+
+dados_sem_outliers <- dados %>%
+  filter(
+    remove_outliers_iqr(pib),
+    remove_outliers_iqr(vida),
+    remove_outliers_iqr(desemprego)
+  )
+
+```
+
+```{r}
+
+# TESTANDO A PRESENÇA DE NAs
+
+summary(dados_sem_outliers$pib)
+sd(dados_sem_outliers$pib)
+
+summary(dados_sem_outliers$vida)
+sd(dados_sem_outliers$vida)
+
+summary(dados_sem_outliers$desemprego)
+sd(dados_sem_outliers$desemprego)
+
+
+```
+
+```{r}
+# OUTRA POSSIBILIDADE É IMPUTAÇÃO DOS DADOS VIA COMPORTAMENTO DE ESTATÍSTICAS DESCRITIVAS
+
+dados_imputados <- dados %>%
+  mutate(
+    bienio = year - (year %% 2)
+  ) %>%
+  group_by(bienio) %>%
+  mutate(
+    pib = if_else(
+      is.na(pib),
+      mean(pib, na.rm = TRUE),
+      pib
+    ),
+    vida = if_else(
+      is.na(vida),
+      mean(vida, na.rm = TRUE),
+      vida
+    ),
+    desemprego = if_else(
+      is.na(desemprego),
+      mean(desemprego, na.rm = TRUE),
+      desemprego
+    )
+  ) %>%
+  ungroup() %>%
+  select(-bienio)
+
+
+```
+
+
+```{r}
+
+# TESTANDO A PRESENÇA DE NAs
+
+summary(dados_imputados$pib)
+sd(dados_imputados$pib)
+
+summary(dados_imputados$vida)
+sd(dados_imputados$vida)
+
+summary(dados_imputados$desemprego)
+sd(dados_imputados$desemprego)
+
+```
+
+
+# Correlação
+
+```{r}
+
+# PACOTE PARA ANÁLISE DE CORRELAÇÃO
+pacman::p_load(corrplot)
+
+
+```
+
+## Correlação de Pearson
+
+Quais são os pressupostos da Correlação de Pearson? Normalidade via Teste Shapiro-Wilk, presença de Outliers e relação linear entre as variáveis
+
+```{r}
+# TESTE DE NORMALIDADE
+# TESTE DE HIPÓTESES
+
+# ONDE A HIPOTESE NULA (H0) É QUE OS DADOS SEGUEM A DISTRIBUIÇÃO NORMAL (PARA VALORES MAIORES QUE 5% NO P-VALUE), E A HIPOTESE ALTERNATIVA (H1) É QUE A DISTRIBUIÇÃO É DIFERENTE DA NORMAL (PARA VALORES MENORES QUE 5% NO P-VALUE)
+
+shapiro.test(dados_sem_outliers$pib)
+shapiro.test(dados_sem_outliers$vida)
+shapiro.test(dados_sem_outliers$desemprego)
+
+# NENHUMA DAS ALTERNATIVAS ACIMA TÊM DISTRIBUIÇÃO NORMAL
+
+```
+### Presença de outliers {.tabset .tabset-fade}
+
+#### PIB
+
+```{r}
+
+boxplot(dados_sem_outliers$pib)
+
+```
+
+#### Expectativa de vida
+
+```{r}
+
+boxplot(dados_sem_outliers$vida)
+
+```
+
+#### Desemprego
+
+```{r}
+
+boxplot(dados_sem_outliers$desemprego)
+
+```
+
+### Relação linear entre variáveis {.tabset .tabset-fade}
+
+#### Arranjo 1
+
+```{r}
+
+plot(dados_sem_outliers$vida, dados_sem_outliers$pib)
+
+
+```
+#### Arranjo 2
+
+```{r}
+
+plot(dados_sem_outliers$vida, dados_sem_outliers$desemprego)
+
+
+```
+
+#### Arranjo 3
+
+```{r}
+
+plot(dados_sem_outliers$desemprego, dados_sem_outliers$pib)
+
+
+```
+
+
+## Correlação de Spearman
+
+## Correlação de Kendall
+
+# Métodos dos Mínimos Quadrados Ordinários {.tabset .tabset-fade}
+
+O Método dos Mínimos Quadrados Ordinários (MQO) é o fundamento matemático e estatístico que permite transformar um conjunto de dados observados em um modelo linear estimado. A sua importância decorre do fato de que ele fornece um critério claro, operacional e teoricamente justificado para escolher os coeficientes $\beta_0, \beta_1, \ldots, \beta_k$ que melhor descrevem a relação entre as variáveis.
+
+A primeira expressão
+
+$$
+\min_{\beta_0, \beta_1, \dots, \beta_k}\sum_{i=1}^{n}\left( Y_i - \beta_0 - \sum_{j=1}^{k} \beta_j X_{ji} \right)^2
+$$
+
+define o **problema de otimização central do MQO**. O que se busca é encontrar os valores dos parâmetros que minimizam a soma dos quadrados dos resíduos. O termo entre parênteses representa a diferença entre o valor observado (Y_i) e o valor ajustado pelo modelo linear. Ao elevar essa diferença ao quadrado, o método garante que erros positivos e negativos não se anulem e, ao mesmo tempo, penaliza erros grandes de forma mais severa do que erros pequenos. Assim, o MQO escolhe os coeficientes que produzem, no conjunto, o **melhor ajuste médio possível** aos dados.
+
+A importância dessa minimização está no fato de que ela fornece uma **regra objetiva** para estimar os parâmetros. Não se trata de um ajuste visual ou arbitrário, mas de uma solução única (sob condições padrão) derivada de um critério matemático explícito. Em termos geométricos, o MQO projeta o vetor de valores observados (Y) sobre o espaço gerado pelas variáveis explicativas, garantindo que os resíduos sejam ortogonais a esse espaço. Isso confere ao modelo uma propriedade central: não há informação linear adicional nas variáveis explicativas que possa reduzir ainda mais os erros.
+
+A segunda expressão
+
+$$
+\hat{\varepsilon}_i = Y_i - \hat{\beta}_0 - \sum_{j=1}^{k} \hat{\beta}_j X_{ji}
+$$
+
+define o resíduo estimado para cada observação. O resíduo mede exatamente aquilo que o modelo não consegue explicar. A importância desse termo é dupla. Primeiro, ele permite avaliar a qualidade do ajuste, pois resíduos pequenos indicam que o modelo descreve bem os dados, enquanto resíduos grandes sugerem omissões, má especificação ou alta variabilidade não explicada. Segundo, os resíduos são a base para toda a inferência estatística associada à regressão: testes de hipóteses, intervalos de confiança e diagnósticos do modelo dependem diretamente do seu comportamento.
+
+Do ponto de vista teórico, o MQO é especialmente importante porque, sob hipóteses relativamente fracas (linearidade, exogeneidade, variância constante e ausência de multicolinearidade perfeita), os estimadores obtidos possuem propriedades desejáveis. Eles são não viesados, consistentes e, pelo Teorema de Gauss–Markov, apresentam a menor variância possível entre todos os estimadores lineares não viesados. Isso significa que, dentro dessa classe, nenhum outro método produz estimativas mais precisas em média.
+
+Além disso, o MQO cria uma ponte direta entre álgebra, geometria e estatística aplicada. Ele pode ser interpretado como um problema de minimização, como uma projeção em espaços vetoriais ou como um procedimento inferencial probabilístico. 
+
+Em síntese, a importância dos Mínimos Quadrados Ordinários reside em três aspectos centrais: ele fornece um critério matemático rigoroso para estimar coeficientes, permite quantificar sistematicamente o erro por meio dos resíduos e garante propriedades estatísticas ótimas sob condições bem definidas. 
+
+
+### Modelo com R2 alto
+
+```{r, echo=FALSE, fig.align='center'}
+
+# -----------------------------
+# 1. Gerando dados simulados
+# -----------------------------
+set.seed(123)
+
+x <- 1:100
+y <- 2 + 0.8 * x + rnorm(100, mean = 0, sd = 2)
+
+# -----------------------------
+# 2. Ajustando o modelo OLS
+# -----------------------------
+modelo <- lm(y ~ x)
+
+# -----------------------------
+# 3. Plot dos dados
+# -----------------------------
+plot(x, y,
+     pch = 16,
+     col = "black",
+     xlab = "Variavel independente (x)",
+     ylab = "Variavel dependente (y)",
+     main = "")
+
+# -----------------------------
+# 4. Reta de regressão
+# -----------------------------
+abline(modelo, col = "red", lwd = 3)
+
+# -----------------------------
+# 5. Desenhando os resíduos
+# -----------------------------
+y_hat <- fitted(modelo)
+
+segments(x0 = x, y0 = y,
+         x1 = x, y1 = y_hat,
+         col = "gray")
+
+# -----------------------------
+# 6. Legenda explicativa
+# -----------------------------
+legend("topleft",
+       legend = c(
+         "Observacoes",
+         "Reta de regressao (OLS)",
+         "Residuos (erros)"
+       ),
+       col = c("black", "red", "gray"),
+       pch = c(16, NA, NA),
+       lwd = c(NA, 3, 1),
+       lty = c(NA, 1, 1),
+       bty = "n")
+
+
+```
+
+### Modelo de R2 mais baixo
+
+```{r, echo=FALSE, fig.align='center'}
+
+# -----------------------------
+# 1. Gerando dados simulados
+# -----------------------------
+set.seed(123)
+
+x <- runif(200, min = 0, max = 100)
+y <- 2 + 0.8 * x + rnorm(200, 0, 10)
+
+# -----------------------------
+# 2. Ajustando o modelo OLS
+# -----------------------------
+modelo <- lm(y ~ x)
+
+# -----------------------------
+# 3. Plot dos dados
+# -----------------------------
+plot(x, y,
+     pch = 16,
+     col = "black",
+     xlab = "Variavel independente (x)",
+     ylab = "Variavel dependente (y)",
+     main = "")
+
+# -----------------------------
+# 4. Reta de regressão
+# -----------------------------
+abline(modelo, col = "red", lwd = 3)
+
+# -----------------------------
+# 5. Desenhando os resíduos
+# -----------------------------
+y_hat <- fitted(modelo)
+
+segments(x0 = x, y0 = y,
+         x1 = x, y1 = y_hat,
+         col = "gray")
+
+# -----------------------------
+# 6. Legenda explicativa
+# -----------------------------
+legend("topleft",
+       legend = c(
+         "Observacoes",
+         "Reta de regressao (OLS)",
+         "Residuos (erros)"
+       ),
+       col = c("black", "red", "gray"),
+       pch = c(16, NA, NA),
+       lwd = c(NA, 3, 1),
+       lty = c(NA, 1, 1),
+       bty = "n")
+
+
+```
+
+# Análise dos resíduos: a diagnose do modelo
+
+## Homocedasticidade
+
+## Normalidade da distribuição dos resíduos
+
+teste de shapiro
+
+## Outliers, pontos de alavancagem e distância de Cook
+
+# Generalized Linear Models (GLMs)
+
+# Modelos Não-lineares
+
+# Referências
+
+<br>
+<a href="https://github.com/ryallmeida/r_p_saude/blob/main/LICENSE"
+   target="_blank"
+   rel="noopener noreferrer">
+  <img
+    src="https://raw.githubusercontent.com/ryallmeida/r_p_saude/main/modulos/img/mit_license.jpeg"
+    alt="MIT License"
+    height="50"
+  />
+</a>
+<br>
+
+
