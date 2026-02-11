@@ -164,7 +164,7 @@ $$
 
 define o **problema de otimização central do MQO**. O que se busca é encontrar os valores dos parâmetros que minimizam a soma dos quadrados dos resíduos. O termo entre parênteses representa a diferença entre o valor observado $Y_i$ e o valor ajustado pelo modelo linear. Ao elevar essa diferença ao quadrado, o método garante que erros positivos e negativos não se anulem e, ao mesmo tempo, penaliza erros grandes de forma mais severa do que erros pequenos. Assim, o MQO escolhe os coeficientes que produzem, no conjunto, o **melhor ajuste médio possível** aos dados.
 
-A importância dessa minimização está no fato de que ela fornece uma **regra objetiva** para estimar os parâmetros. Não se trata de um ajuste visual ou arbitrário, mas de uma solução única (sob condições padrão) derivada de um critério matemático explícito. Em termos geométricos, o MQO projeta o vetor de valores observados (Y) sobre o espaço gerado pelas variáveis explicativas, garantindo que os resíduos sejam ortogonais a esse espaço. Isso confere ao modelo uma propriedade central: não há informação linear adicional nas variáveis explicativas que possa reduzir ainda mais os erros.
+A importância dessa minimização está no fato de que ela fornece uma regra objetiva para estimar os parâmetros. Em termos geométricos, o MQO projeta o vetor de valores observados $Y$ sobre o espaço gerado pelas variáveis explicativas, garantindo que os resíduos sejam ortogonais a esse espaço. Isso confere ao modelo uma propriedade central: não há informação linear adicional nas variáveis explicativas que possa reduzir ainda mais os erros.
 
 A segunda expressão
 
@@ -174,7 +174,62 @@ $$
 
 define o resíduo estimado para cada observação. O resíduo mede exatamente aquilo que o modelo não consegue explicar. A importância desse termo é dupla. Primeiro, ele permite avaliar a qualidade do ajuste, pois resíduos pequenos indicam que o modelo descreve bem os dados, enquanto resíduos grandes sugerem omissões, má especificação ou alta variabilidade não explicada. Segundo, os resíduos são a base para toda a inferência estatística associada à regressão: testes de hipóteses, intervalos de confiança e diagnósticos do modelo dependem diretamente do seu comportamento.
 
-Do ponto de vista teórico, o MQO é especialmente importante porque, sob hipóteses relativamente fracas (linearidade, exogeneidade, variância constante e ausência de multicolinearidade perfeita), os estimadores obtidos possuem propriedades desejáveis. Eles são não viesados, consistentes e, pelo Teorema de Gauss–Markov, apresentam a menor variância possível entre todos os estimadores lineares não viesados. Isso significa que, dentro dessa classe, nenhum outro método produz estimativas mais precisas em média.
+
+Em um modelo de regressão linear simples, partimos da ideia de que a variável resposta $y$ pode ser explicada, ao menos parcialmente, por uma relação linear com uma variável explicativa $x$. Essa relação como já dito é escrita como
+
+$$
+y_i = \beta_0 + \beta_1 x_i + \varepsilon_i,
+$$
+em que $\beta_0$ representa o valor médio de $y$ quando $x = 0$, $\beta_1$ indica o quanto $y$ tende a variar quando $x$ aumenta uma unidade, e $\varepsilon_i$ é o erro, isto é, tudo aquilo que o modelo não consegue explicar. Como os verdadeiros valores de $\beta_0$ e $\beta_1$ são desconhecidos, o objetivo da regressão é estimá-los a partir dos dados observados.
+
+O método dos mínimos quadrados faz isso escolhendo os valores de $\beta_0$ e $\beta_1$ que minimizam a soma dos quadrados dos erros, definida por
+
+$$
+S(\beta_0,\beta_1) = \sum_{i=1}^{n} \left( y_i - \beta_0 - \beta_1 x_i \right)^2
+$$
+
+Essa equação é fundamental porque formaliza o critério de “melhor ajuste”: quanto menor essa soma, mais próximas as previsões do modelo estão dos valores observados, evitando que erros positivos e negativos se anulem.
+
+Para encontrar os valores que minimizam essa soma, derivamos $S(\beta_0,\beta_1)$ em relação a cada parâmetro e igualamos as derivadas a zero. A derivada em relação a $\beta_0$ resulta em
+
+$$
+\left.\frac{\partial S}{\partial \beta_0}\right|_{\hat{\beta}_0,\hat{\beta}*1}
+= -2 \sum*{i=1}^{n} \left( y_i - \hat{\beta}_0 - \hat{\beta}_1 x_i \right) = 0
+$$
+
+o que garante que, no ponto ótimo, os erros do modelo se equilibram em torno de zero. Essa condição é importante porque assegura que o modelo não esteja sistematicamente superestimando ou subestimando os valores de $y$.
+
+De forma complementar, a derivada em relação a $\beta_1$ é dada por
+
+$$
+\left.\frac{\partial S}{\partial \beta_1}\right|_{\hat{\beta}_0,\hat{\beta}*1}
+= -2 \sum*{i=1}^{n} \left( y_i - \hat{\beta}_0 - \hat{\beta}_1 x_i \right) x_i = 0
+$$
+
+Essa equação incorpora a variável explicativa $x$ e garante que os resíduos não estejam correlacionados com ela. Em termos intuitivos, isso significa que, depois de ajustado o modelo, não deve restar uma relação sistemática entre os erros e $x$, pois, se restasse, o modelo ainda poderia ser melhorado.
+
+A solução desse sistema leva diretamente aos estimadores de mínimos quadrados. O intercepto é obtido por
+
+$$
+\hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}
+$$
+
+mostrando que a reta ajustada sempre passa pelo ponto médio dos dados $(\bar{x}, \bar{y})$. Essa propriedade é crucial porque ancora o modelo no “centro” da nuvem de pontos, evitando deslocamentos artificiais da reta.
+
+Já o coeficiente angular é dado por
+
+$$
+\hat{\beta}_1 =
+\frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sum (x_i - \bar{x})^2} =
+\frac{\sum (x_i - \bar{x}) y_i}{\sum (x_i - \bar{x})^2}
+$$
+
+Essa expressão mostra que $\hat{\beta}_1$ é, essencialmente, uma razão entre duas variabilidades: no numerador, aparece a covariação entre $x$ e $y$, indicando se eles variam juntos; no denominador, a variabilidade de  $x$, que funciona como um fator de escala. Assim, o coeficiente angular mede quanto da variação de $y$ pode ser atribuída, em média, às mudanças em $x$, tornando explícita a lógica central da regressão linear.
+
+
+Dado ao exposto, do ponto de vista teórico, o MQO é especialmente importante porque, sob hipóteses relativamente fracas (linearidade, exogeneidade, variância constante e ausência de multicolinearidade perfeita), os estimadores obtidos possuem propriedades desejáveis. Eles são não viesados, consistentes e, pelo Teorema de Gauss–Markov, apresentam a menor variância possível entre todos os estimadores lineares não viesados. Isso significa que, dentro dessa classe, nenhum outro método produz estimativas mais precisas em média.
+
+
 
 ```{r, echo=FALSE, message = FALSE, warning = FALSE}
 
@@ -523,7 +578,8 @@ if(!require("pacman")) {
 
 pacman::p_load(tidyverse,
                lubridate,
-               WDI)
+               WDI, 
+               psych)
 
 ```
 
@@ -559,11 +615,26 @@ dplyr::glimpse(dados)
 
 ```{r}
 
+# OBSERVANDO COMPORTAMENTO DESCRITIVO
+
+psych::describe(dados$pib)
+psych::describe(dados$vida)
+psych::describe(dados$desemprego)
+
 # TESTANDO A PRESENÇA DE NAs
 
-summary(dados$pib)
-summary(dados$vida)
-summary(dados$desemprego)
+variaveis <- c("pib", "vida", "desemprego")
+
+for (v in variaveis) {
+  n_na <- sum(is.na(dados[[v]]))
+  
+  if (n_na > 0) {
+    message("A variável ", v, " possui ", n_na, " valores NA.")
+  } else {
+    message("A variável ", v, " não possui valores NA.")
+  }
+}
+
 
 # NOTE A PRESENÇA DE NAS NO OUTPUT QUE SEGUE
 
@@ -596,14 +667,18 @@ dados_sem_outliers <- dados %>%
 
 # OBSERVANDO A PRESENÇA DE NAs
 
-summary(dados_sem_outliers$pib)
-sd(dados_sem_outliers$pib)
+variaveis <- c("pib", "vida", "desemprego")
 
-summary(dados_sem_outliers$vida)
-sd(dados_sem_outliers$vida)
+for (v in variaveis) {
+  n_na <- sum(is.na(dados_sem_outliers[[v]]))
+  
+  if (n_na > 0) {
+    message("A variável ", v, " possui ", n_na, " valores NA.")
+  } else {
+    message("A variável ", v, " não possui valores NA.")
+  }
+}
 
-summary(dados_sem_outliers$desemprego)
-sd(dados_sem_outliers$desemprego)
 
 
 ```
@@ -645,17 +720,139 @@ dados_imputados <- dados %>%
 
 # TESTANDO A PRESENÇA DE NAs
 
-summary(dados_imputados$pib)
-sd(dados_imputados$pib)
+variaveis <- c("pib", "vida", "desemprego")
 
-summary(dados_imputados$vida)
-sd(dados_imputados$vida)
+for (v in variaveis) {
+  n_na <- sum(is.na(dados_imputados[[v]]))
+  
+  if (n_na > 0) {
+    message("A variável ", v, " possui ", n_na, " valores NA.")
+  } else {
+    message("A variável ", v, " não possui valores NA.")
+  }
+}
 
-summary(dados_imputados$desemprego)
-sd(dados_imputados$desemprego)
+
 
 ```
 
+
+```{r, fig.align='center', message=FALSE, warning=FALSE, echo=FALSE}
+
+pacman::p_load(
+  ggplot2,
+  ggthemes,
+  sf,
+  ggiraph,
+  dplyr,
+  rnaturalearth,
+  rnaturalearthdata
+)
+
+world <- ne_countries(
+  scale = "medium",
+  returnclass = "sf"
+)
+
+df_country <- dados_sem_outliers |>
+  count(iso3c, country, name = "frequencia") |>
+  ungroup() |>
+  mutate(
+    share = frequencia / sum(frequencia) * 100,
+    label = paste0(round(share, 1), "%")
+  )
+
+world_data <- world |>
+  left_join(df_country, by = c("iso_a3" = "iso3c"))
+
+pmap <- ggplot(world_data) +
+  geom_sf_interactive(
+    aes(
+      fill = share,
+      data_id = iso_a3,
+      tooltip = paste0(
+        "País: ", name_long, "\n",
+        "ISO3: ", iso_a3, "\n",
+        "Frequência: ", frequencia, "\n",
+        "Participação: ", label
+      )
+    ),
+    color = "white",
+    lwd = 0.1
+  ) +
+  scale_fill_viridis_c(
+    option = "viridis",
+    na.value = "grey90"
+  ) +
+  labs(
+    title = "",
+    subtitle = "",
+    fill = "Share (%)"
+  ) +
+  theme_map() +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+interactive_map <- girafe(
+  ggobj = pmap,
+  options = list(
+    opts_hover(css = "stroke:greylight;stroke-width:2px;"),
+    opts_hover_inv(css = "opacity:1.0;"),
+    opts_selection(type = "single", only_shiny = FALSE)
+  )
+)
+
+
+interactive_map
+
+
+```
+
+
+```{r, echo = FALSE, fig.align="center", warning = FALSE, message = FALSE}
+pacman::p_load(
+  dplyr,
+  countrycode
+)
+
+dados_sem_outliers <- dados_sem_outliers |>
+  mutate(
+    continente = countrycode(
+      iso3c,
+      origin = "iso3c",
+      destination = "continent"
+    )
+  )
+
+
+tabela_continente <- dados_sem_outliers |>
+  count(continente, name = "observacoes") |>
+  mutate(
+    proporcao = observacoes / sum(observacoes),
+    percentual = round(proporcao * 100, 2)
+  ) |>
+  arrange(desc(observacoes))
+
+knitr::kable(
+  tabela_continente,
+  col.names = c(
+    "Continente",
+    "Número de observações",
+    "Proporção",
+    "Percentual (%)"
+  ),
+  align = c("l", "r", "r", "r"),
+  digits = 3,
+  caption = "Distribuição das observações por continente"
+)
+
+
+
+
+```
 
 # Correlação
 
@@ -746,59 +943,250 @@ shapiro.test(dados_sem_outliers$desemprego)
 ```
 ### Presuposto: Ausência de outliers {.tabset .tabset-fade}
 
-#### PIB
+#### Log(PIB) 
 
-```{r, fig.align="center"}
+```{r, fig.align="center", echo=FALSE}
 
-boxplot(dados_sem_outliers$pib)
+p_pib <- dados_sem_outliers %>%
+  ggplot(aes(x = continente,
+             y = pib,
+             fill = continente)) +
+
+  geom_violin(
+    alpha = 0.25,
+    scale = "width",
+    color = NA
+  ) +
+
+  geom_boxplot(
+    width = 0.15,
+    outlier.shape = NA,
+    alpha = 0.9
+  ) +
+
+  geom_jitter(
+    color = "white",
+    size = 0.6,
+    alpha = 0.15,
+    width = 0.25
+  ) +
+
+  viridis::scale_fill_viridis(discrete = TRUE) +
+
+  scale_y_log10() +
+
+  labs(
+    title = "",
+    x = "",
+    y = "PIB (Log 10)"
+  ) +
+
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "none")
+
+print(p_pib)
+
 
 ```
 
 #### Expectativa de vida
 
-```{r, fig.align="center"}
+```{r, fig.align="center", echo=FALSE}
+p_vida <- dados_sem_outliers %>%
+  ggplot(aes(x = continente,
+             y = vida,
+             fill = continente)) +
 
-boxplot(dados_sem_outliers$vida)
+  geom_violin(
+    alpha = 0.25,
+    scale = "width",
+    color = NA
+  ) +
+
+  geom_boxplot(
+    width = 0.15,
+    outlier.shape = NA,
+    alpha = 0.9
+  ) +
+
+  geom_jitter(
+    color = "white",
+    size = 0.6,
+    alpha = 0.15,
+    width = 0.25
+  ) +
+
+  viridis::scale_fill_viridis(discrete = TRUE) +
+
+  labs(
+    title = "",
+    x = "",
+    y = "Expectativa de vida (anos)"
+  ) +
+
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "none")
+
+print(p_vida)
+
+
 
 ```
 
 #### Desemprego
 
-```{r, fig.align="center"}
+```{r, fig.align="center", echo=FALSE}
 
-boxplot(dados_sem_outliers$desemprego)
+p_desemprego <- dados_sem_outliers %>%
+  ggplot(aes(x = continente,
+             y = desemprego,
+             fill = continente)) +
+
+  geom_violin(
+    alpha = 0.25,
+    scale = "width",
+    color = NA
+  ) +
+
+  geom_boxplot(
+    width = 0.15,
+    outlier.shape = NA,
+    alpha = 0.9
+  ) +
+
+  geom_jitter(
+    color = "white",
+    size = 0.6,
+    alpha = 0.15,
+    width = 0.25
+  ) +
+
+  viridis::scale_fill_viridis(discrete = TRUE) +
+
+  labs(
+    title = "",
+    x = "",
+    y = "Taxa de desemprego"
+  ) +
+
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "none")
+
+print(p_desemprego)
+
+
 
 ```
 
 ### Pressuposto: Relação linear entre variáveis {.tabset .tabset-fade}
 
-#### Arranjo 1
+#### EXPECTATIVA DE VIDA X PIB
 
-```{r, fig.align="center"}
+```{r, fig.align="center", echo=FALSE}
 
-plot(dados_sem_outliers$vida, dados_sem_outliers$pib)
+p1 <- plot_ly(
+  data = dados_sem_outliers,
+  x = ~vida,
+  y = ~pib,
+  type = "scatter",
+  mode = "markers",
+  color = ~continente,
+  colors = viridis::viridis(
+    length(unique(dados_sem_outliers$continente))
+  ),
+  marker = list(size = 5, opacity = 0.5),
+  text = ~paste(
+    "País:", country,
+    "<br>Continente:", continente,
+    "<br>Vida:", vida,
+    "<br>PIB:", pib
+  ),
+  hoverinfo = "text"
+) %>%
+  layout(
+    title = "",
+    xaxis = list(title = "Expectativa de vida (anos)"),
+    yaxis = list(title = "PIB per capita (US$)"),
+    legend = list(title = list(text = "Continente"))
+  )
+
+p1
+
 
 
 ```
 
-#### Arranjo 2
+#### EXPECTATIVA DE VIDA X DESEMPREGO
 
-```{r, fig.align="center"}
+```{r, fig.align="center", echo=FALSE}
 
-plot(dados_sem_outliers$vida, dados_sem_outliers$desemprego)
+p2 <- plot_ly(
+  data = dados_sem_outliers,
+  x = ~desemprego,
+  y = ~vida,
+  type = "scatter",
+  mode = "markers",
+  color = ~continente,
+  colors = viridis::viridis(
+    length(unique(dados_sem_outliers$continente))
+  ),
+  marker = list(size = 5, opacity = 0.5),
+  text = ~paste(
+    "País:", country,
+    "<br>Continente:", continente,
+    "<br>Vida:", vida,
+    "<br>Desemprego:", desemprego
+  ),
+  hoverinfo = "text"
+) %>%
+  layout(
+    title = "",
+    xaxis = list(title = "Taxa de Desemprego (%)"),
+    yaxis = list(title = "Expectativa de vida (anos)"),
+    legend = list(title = list(text = "Continente"))
+  )
+
+p2
+
 
 
 ```
 
-#### Arranjo 3
+#### DESEMPREGO X PIB
 
-```{r, fig.align="center"}
+```{r, fig.align="center", echo=FALSE}
 
-plot(dados_sem_outliers$desemprego, dados_sem_outliers$pib)
+p3 <- plot_ly(
+  data = dados_sem_outliers,
+  x = ~pib,
+  y = ~desemprego,
+  type = "scatter",
+  mode = "markers",
+  color = ~continente,
+  colors = viridis::viridis(
+    length(unique(dados_sem_outliers$continente))
+  ),
+  marker = list(size = 5, opacity = 0.5),
+  text = ~paste(
+    "País:", country,
+    "<br>Continente:", continente,
+    "<br>Desemprego:", desemprego,
+    "<br>PIB:", pib
+  ),
+  hoverinfo = "text"
+) %>%
+  layout(
+    title = "",
+    xaxis = list(title = "PIB per capita (US$)"),
+    yaxis = list(title = "Taxa de desemprego (%)"),
+    legend = list(title = list(text = "Continente"))
+  )
+
+p3
+
 
 
 ```
-
 
 ## Correlação de Spearman
 
