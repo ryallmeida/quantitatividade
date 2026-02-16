@@ -1,0 +1,522 @@
+---
+title: "Por que programar em R?"
+subtitle: "Monitoria em Métodos Quantitativos I"
+author: "Ryan Almeida"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+    html_document:
+       highlight: tango
+       includes:
+         in_header: "C:/Users/ryall/Desktop/R/quantitatividade/quantitatividade/img/header.html"
+       theme: sandstone
+       number_sections: no
+       toc: yes
+       toc_float:
+         collapsed: yes
+         smooth_scroll: no
+header-includes:
+  - \usepackage{tikz}
+  - \usetikzlibrary{arrows.meta, positioning}
+---
+
+
+```{r normas de uso}
+
+# Aviso: Essas notas de aula são exclusivas para uso como guia do curso, porém não substituem as referências e materiais de apoio. Quaisquer erros são de responsabilidade dos autores. 
+# Esse material é protegido por ser propriedade intelectual.
+# Logo, ao reproduzir, divulgar ou distribuir notifique as autorias.
+
+# Caso encontre erros, contate os autores imediatamente. Via e-mail ryallmeida@gmail.com
+
+```
+
+```{r}
+
+# CODADO ORIGINALMENTE EM R, V. 4.5.2
+
+```
+
+```{r Carregamento dos Pacotes, echo=FALSE, message=FALSE, warning=FALSE}
+
+if(!require("pacman")) {
+  install.packages("pacman")
+}
+
+pacman::p_load(tidyverse, 
+               ggpubr, 
+               patchwork,
+               car,
+               rstatix,
+               emmeans,
+               knitr,
+               kableExtra,
+               htmltools,
+               rmarkdown)
+
+```
+
+# Sobre o curso e os autores {.tabset .tabset-fade}
+
+Apostilas dos códigos utilizados nas aulas "Curso: R para Saúde" realizado em parceria entre o Departamento de Ciência Política e o Programa de Pós-graduação em Nutrição da Universidade Federal de Pernambuco. Curso ministrado pelos docentes: [Prof.ª Dr.ª Maria Soares](http://lattes.cnpq.br/6914758127566065) e o [Prof. Dalson Britto](http://lattes.cnpq.br/6683806605359913) e monitorado por [Ryan Almeida](https://github.com/ryallmeida) e [Carla Cavalcante](https://github.com/Carla-Cavalcante)
+
+## Maria Soares
+
+## Ryan Almeida
+
+
+# Fundamentos em R
+
+## Por que programar? Por que codar exatamente em R? 
+
+Motivos para você escolher a Linguagem R
+
+* Linguagem com desenvolvimento comunitário. Logo, constatemente ela se reinventa e se adapta as possibilidades que ou a vida academica ou o mercado pedem.
+
+* Linguagem de programação aberta, então qualquer pessoa pode baixá-la e começar a codar imediatamente e de graça. Diferentemente de outros Softwares pagos comos SPPS ou STATA.
+
+* Mercado de trabalho tem deteminado algumas hardskills que você deve saber e grandes empresas estão cada vez mais interessados em profissionais que saibam usar R.
+
+Bizu da madrinha: presta atenção nesses atalhos que você certamente vai usar quando tiver codando
+
+```{r atalho_rstudio, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
+
+atalhos_rstudio <- data.frame(
+  Atalho = c(
+    "CTRL + ENTER",
+    "ALT + -",
+    "CTRL + SHIFT + M",
+    "CTRL + 1",
+    "CTRL + 2",
+    "CTRL + ALT + I",
+    "CTRL + SHIFT + K",
+    "ALT + SHIFT + K"
+  ),
+  `Função` = c(
+    "Executa a(s) linha(s) selecionada(s) no script",
+    "Insere o operador de atribuição (<-)",
+    "Insere o operador pipe (%>%)",
+    "Move o cursor para o script",
+    "Move o cursor para o console",
+    "Cria um chunk em um documento R Markdown",
+    "Compila (renderiza) um arquivo R Markdown",
+    "Abre a janela com todos os atalhos disponíveis"
+  ),
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
+
+knitr::kable(head(atalhos_rstudio, 10))
+
+
+```
+
+
+
+
+# Aplicações com dados simulados {.tabset .tabset-fade}
+
+## Boxplots com estatísticas
+
+```{r Boxplot, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
+
+if(!require("pacman")) {
+  install.packages("pacman")
+}
+
+pacman::p_load(tidyverse, 
+               ggpubr, 
+               patchwork)
+
+set.seed(123)
+
+n <- 180
+dados <- tibble(
+  id = 1:n,
+  grupo = sample(c("Controle", 
+                   "Intervenção A", 
+                   "Intervenção B"), 
+                 n, 
+                 replace = TRUE),
+  sexo = sample(c("Feminino",
+                  "Masculino"), 
+                n, 
+                replace = TRUE),
+  idade = round(rnorm(n, 
+                      mean = 45, 
+                      sd = 12)),
+  energia_kcal = round(rnorm(n, 
+                             mean = 2200, 
+                             sd = 450)),
+  protein_g = round(rnorm(n,
+                          mean = 80, 
+                          sd = 20)),
+  fat_g = round(rnorm(n, 
+                      mean = 80, 
+                      sd = 25)),
+  carb_g = round(rnorm(n, 
+                       mean = 300, 
+                       sd = 70))
+)
+
+dados <- dados %>%
+  mutate(
+    protein_g = case_when(
+      grupo == "Controle" ~ protein_g - 3,
+      grupo == "Intervenção A" ~ protein_g + 5,
+      grupo == "Intervenção B" ~ protein_g + 1
+    ),
+    energia_kcal = case_when(
+      grupo == "Controle" ~ energia_kcal,
+      grupo == "Intervenção A" ~ energia_kcal - 120,
+      grupo == "Intervenção B" ~ energia_kcal + 80
+    )
+  )
+
+resumo_protein <- dados %>%
+  group_by(grupo) %>%
+  summarise(
+    mean_protein = mean(protein_g),
+    sd_protein = sd(protein_g),
+    n = n(),
+    se_protein = sd_protein / sqrt(n)
+  )
+
+p1_instagram <- ggplot(dados, aes(x = grupo, 
+                                  y = protein_g, 
+                                  fill = grupo)) +
+  geom_boxplot(outlier.shape = NA, 
+               alpha = 0.4, 
+               width = 0.6) +
+  geom_jitter(width = 0.15, 
+              alpha = 0.6, 
+              size = 1.4) +
+  geom_point(data = resumo_protein, aes(x = grupo, 
+                                        y = mean_protein), 
+             color = "black", 
+             size = 3) +
+    geom_jitter(color="grey", 
+              size=0.2, 
+              alpha=0.7,
+              width = 0.4,
+              shape = 10) +
+  geom_errorbar(data = resumo_protein,
+                aes(x = grupo, 
+                    y = mean_protein, 
+                    ymin = mean_protein - se_protein, ymax = mean_protein + se_protein),
+                width = 0.15, 
+                color = "white", 
+                size = 0.8) +
+  stat_summary(fun = median, 
+               geom = "point", 
+               shape = 95, 
+               size = 6, 
+               color = "white") +
+  labs(title = "",
+       x = "X", 
+       y = "Y") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "none") +
+  scale_fill_viridis_d(option = "magma")
+
+
+print(p1_instagram)
+
+```
+
+<figcaption style="text-align: center;">
+  <strong>Figura:</strong> Boxplots por grupo representando a distribuição e as estatísticas principais de três variáveis<br>
+  <strong>Elaboração própria.</strong> Pires, Soares &amp; Cavalvante (2025).
+</figcaption>
+
+## Gráfico de Violino 
+
+```{r Violino, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
+
+df <- read.csv("https://raw.githubusercontent.com/ryallmeida/r_p_saude/refs/heads/main/database/dados_obesidade.csv")
+
+p1 <- df %>%
+  ggplot( aes(x= Gender, 
+              y= Height, 
+              fill= Gender)) +
+  geom_violin(alpha = 0.2, 
+              scale = "width") +
+  geom_boxplot() +
+  viridis::scale_fill_viridis(discrete = TRUE, 
+                              alpha=0.6) +
+  geom_jitter(color="white", 
+              size=0.2, 
+              alpha=0.7,
+              width = 0.4,
+              shape = 10) +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=11)
+  ) +
+  ggtitle("") +
+  xlab("") +
+    labs(title = "", 
+       x = "X",
+       y = "Y") +
+  theme_minimal(base_size = 14)+
+  scale_fill_viridis_d(option = "magma")
+
+
+print(p1)
+
+```
+
+<figcaption style="text-align: center;">
+  <strong>Figura:</strong> Gráfico de violino por gênero representando a distribuição de determinada variável dado o grupo<br>
+  <strong>Elaboração própria.</strong> Pires, Soares &amp; Cavalvante (2025).
+</figcaption>
+
+
+## Gráfico de Densidade 
+
+```{r Densidade Normalizada, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
+
+if(!require("pacman")) {
+  install.packages("pacman")
+}
+
+pacman::p_load(tidyverse, 
+               psych, 
+               likert, 
+               table1, 
+               flextable, 
+               RColorBrewer, 
+               viridis)
+
+df <- read.csv("https://raw.githubusercontent.com/ryallmeida/r_p_saude/refs/heads/main/database/dados_obesidade.csv")
+
+Height_z <- scale(df$Height)
+Weight_z <- scale(df$Weight)
+
+
+p3 <- ggplot(df) +
+  # Altura padronizada (cima)
+  geom_density(aes(x = Height_z, 
+                   y = after_stat(density)/max(after_stat(density)), 
+                   fill = Gender),
+               alpha = 0.5, 
+               color = NA) +
+  viridis::scale_fill_viridis(discrete = TRUE, 
+                              alpha=0.6) +
+  annotate("label",
+           x = 4.5,
+           y = 0.25,
+           label = "Altura",
+           color = "black", 
+           hjust = 1) +
+  
+  # Peso padronizado (baixo, espelhado)
+  geom_density(aes(x = Weight_z, y = -after_stat(density)/max(after_stat(density)), fill = Gender),
+               alpha = 0.5, 
+               color = NA) + 
+  viridis::scale_fill_viridis(discrete = TRUE, 
+                              alpha=0.6) +
+  annotate("label",
+           x = 4.5,
+           y = -0.25,
+           label = "Peso",
+           color = "black", 
+           hjust = 1) +
+  geom_hline(yintercept = 0) +
+  labs(title = "", 
+       x = "Valores padronizados (Zscore)",
+       y = "Densidade normalizada") +
+  theme_minimal() +
+  scale_fill_viridis_d(option = "magma")
+
+
+print(p3)
+
+```
+
+<figcaption style="text-align: center;">
+  <strong>Figura:</strong> Gráfico de densidade normalizada agrupado por sexo espelhado sob duas variáveis<br>
+  <strong>Elaboração própria.</strong> Pires, Soares &amp; Cavalvante (2025).
+</figcaption>
+
+
+## Ajuste linear por grupo
+
+```{r Ajuste Linear, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
+
+p2_instagram <- ggplot(dados, aes(x = energia_kcal, y = protein_g, color = grupo)) +
+  geom_point(alpha = 0.6, size = 1.2) +
+  geom_smooth(method = "lm", se = TRUE, fullrange = FALSE) +
+  labs(
+    title = "",
+    x = "X",
+    y = "Y",
+    color = "Grupo"
+  ) +
+  theme_minimal(base_size = 14) +
+  scale_color_manual(values = c("#000004", "#B5367A", "#FCFDBF"))
+
+print(p2_instagram)
+
+```
+
+<figcaption style="text-align: center;">
+  <strong>Figura:</strong> Variável "Y" em função da variável "X" de com ajuste linear por grupo<br>
+  <strong>Elaboração própria.</strong> Pires, Soares &amp; Cavalvante (2025).
+</figcaption>
+<br>
+  
+Esses são uns dos muitos pontenciais do R. Se te convencemos a gostar dessa liguagem, continua lendo essa apostila.
+
+
+# Programação orientada à objetos
+
+A linguagem R, assim como outras existentes tem como possibilidade a criação de objetos. Vejamos alguns exemplos simples
+
+```{r}
+
+valor <- 10.5678
+conjunto <- c(1, 3, 5, 7)
+cores <- c("azul", "vermelho")
+
+```
+
+Em cada exemplo, usamos o símbolo de atribuição ("<-"). No R, também é possível usar '=' com a mesma função, mas não aconselhamos porque as vezes pode confundir quem está começando. 
+
+No primeiro exemplo, temos um objeto do tipo numérico. No segundo e terceiro temos um vetor, pois concatena informações. 
+
+É possível acessar os objetos criados no R. Basta usar o comando ``ls()``. E para removê-los caso precise desocupar slots de memória, use:
+
+```{r, eval=FALSE}
+
+# COLOQUE A OBJETO QUE VOCÊ QUER REMOVER DENTRO DO PARENTESES DA rm()
+
+rm(); gc()
+
+```
+
+Detalhe importante: o R é uma linguagem q-sensitiva, ou seja, "cores' é diferente de "Cores" (palavra com letra minúscula vs palavra com letra maiúscula). 
+
+Outro detalhe importante: comente seus códigos com #, converse consigo mesmo, pense no seu "eu do futuro" lendo um código escrito por você no passado. Somos muito incopetentes quando começamos algo novo, você pode cometer erros ao codar, e principalmente quando está balisando estatística e ciência de dados com programação. Sempre tente descrever brevemente o que está fazendo na linha de seu script. 
+
+Álém disso, também é possível acessar os objetos usando a função print()
+Note como funciona: 
+
+```{r}
+
+print(valor)
+
+# OU
+
+valor
+
+# OU
+
+print(valor, digits = 2)
+
+
+```
+
+## Tipos de variáveis em R
+
+```{r Tipo de Variáveis, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
+
+`Tipos de Variáveis` <- data.frame(
+  Tipo = c(
+    "Numéricas (numeric)",
+    "Datas (Date)",
+    "Categóricas (factor)",
+    "Categóricas ordenáveis (ordered)",
+    "Texto (character)",
+    "Booleanas (logical)"
+  ),
+  `Descrição` = c(
+    "Números inteiros ou reais, como idade, renda, número de filhos.",
+    "São um tipo especial de variável numérica.",
+    "Variáveis qualitativas para as quais não é possível atribuir um valor numérico, como sexo, religião, estado civil ou opinião.",
+    "Variáveis categóricas cujas categorias podem ser hierarquizadas, como grau de escolaridade ou respostas ordenadas.",
+    "Características puramente individuais que não podem ser utilizadas para categorizar os indivíduos, usadas em análises qualitativas.",
+    "Variáveis cujos valores podem ser VERDADEIRO ou FALSO; no R, TRUE ou FALSE."
+  ),
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
+
+knitr::kable(head(`Tipos de Variáveis`, 10))
+
+
+```
+
+Veja algumas situações-problemas, que talvez te ajudem a dar luz no seu cerébro caso não tenha entendido ainda. Imagine que você coletou dados de 5 pessoas e, para cada uma, tem as seguintes variáveis:
+
+
+```{r situacao-problema, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
+
+`Tipos de Variáveis` <- data.frame(
+  `Variável` = c(
+    "idade",
+    "data de uma entrevista",
+    "sexo",
+    "escolaridade",
+    "relato de opinião",
+    "fumante"
+  ),
+  `Descrição`= c(
+    "é o número propriamente dito",
+    "data",
+    "categórica (Femino, Masculino, Outro; Você tem três categorias aqui)",
+    "categórica ordenável (Porque você nâo vira doutor sem antes ter se formado no ABC)",
+    "texto de um relato, por exemplo, o R vai entender como um character",
+    "booleana, ou fuma ou não fuma, ou TRUE ou FALSE, ou SIM ou NÃO, note que só existe duas possibilidades e nada mais, essa é a essência de uma variável booleana"
+  ),
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
+
+knitr::kable(head(`Tipos de Variáveis`, 10))
+
+
+```
+
+
+## Operadores Lógico e Matemáticos 
+
+```{r Operadores, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
+
+# Criando um dataframe com operadores do R e seus significados
+`Operadores` <- data.frame(
+  
+  `Operador` = c("+", "-", "/", "*", "^",
+               ">", "<", ">=", "<=",
+               "==", "!=", "&", "|", "!"),
+  
+  `Significado` = c(
+    "Soma",
+    "Subtração",
+    "Divisão",
+    "Multiplicação",
+    "Exponenciação",
+    "Maior que",
+    "Menor que",
+    "Maior ou igual a",
+    "Menor ou igual a",
+    "Igual a",
+    "Diferente de",
+    "E (AND lógico)",
+    "Ou (OR lógico)",
+    "Não (negação lógica)"
+  ),
+  
+  `Tipo` = c(
+    rep("Aritmético", 5),
+    rep("Relacional", 6),
+    rep("Lógico", 3)
+  ),
+  
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
+
+knitr::kable(head(`Operadores`, 10))
+
+
+```

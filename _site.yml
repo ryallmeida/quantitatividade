@@ -1,0 +1,26 @@
+name: "monitoria-metodos"
+output_dir: "docs"
+
+navbar:
+  title: "HOME"
+  left:
+    - text: "Módulo 1"
+      menu:
+        - text: "Introdução"
+          href: introducao.html
+        - text: "Estatística Descritiva"
+          href: descritiva.html
+
+    - text: "Módulo 2"
+      menu:
+        - text: "Regressão"
+          href: index.html
+          
+    - text: "Módulo 3"
+      menu:
+        - text: "PLN"
+          href: pln.html
+
+
+
+
